@@ -83,6 +83,8 @@ jobs:
           exit-code: "1"
           severity: CRITICAL
           ignore-unfixed: true
+        env:
+          TRIVY_IGNOREFILE: .trivyignore.yaml
 
       - name: Push (reuses the scanned build from cache)
         uses: docker/build-push-action@v6

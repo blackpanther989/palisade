@@ -1,3 +1,42 @@
 packages:
   - "apps/*"
   - "packages/*"
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  cpu-features: true
+  esbuild: true
+  prisma: true
+  protobufjs: true
+  sharp: true
+  ssh2: true
+minimumReleaseAgeExclude:
+  - multer@2.1.0 || 2.1.1 || 2.2.0
+  - file-type@21.3.1 || 21.3.2
+  - lodash@4.17.23 || 4.17.24
+  - postcss@8.5.10 || 8.5.12 || 8.5.18
+  - '@nestjs/core@11.1.18'
+  - uuid@11.1.1
+  - qs@6.15.2
+  - body-parser@1.20.6
+  - sharp@0.35.0
+  - brace-expansion@5.0.8
+overrides:
+  '@nestjs/core@<=11.1.17': ^11.1.18
+  body-parser@<1.20.6: ^1.20.6
+  file-type@>=13.0.0 <21.3.1: ^21.3.1
+  file-type@>=20.0.0 <=21.3.1: ^21.3.2
+  lodash@<=4.17.23: ^4.17.24
+  lodash@>=4.0.0 <=4.17.22: ^4.17.23
+  lodash@>=4.0.0 <=4.17.23: ^4.17.24
+  multer@<2.1.0: ^2.1.0
+  multer@<2.1.1: ^2.1.1
+  multer@>=1.0.0 <2.2.0: ^2.2.0
+  multer@>=2.0.0-alpha.1 <2.2.0: ^2.2.0
+  postcss@<8.5.10: ^8.5.10
+  postcss@<=8.5.11: ^8.5.12
+  postcss@<=8.5.17: ^8.5.18
+  qs@>=6.11.1 <=6.15.1: ^6.15.2
+  sharp@<0.35.0: ^0.35.0
+  uuid@<11.1.1: ^11.1.1

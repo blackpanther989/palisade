@@ -69,7 +69,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/shakes63/palisade
+          images: ghcr.io/blackpanther989/palisade
           # Deliberately no `latest` and no semver tags here — structurally
           # impossible for a nightly to reach the stable channel.
           tags: |
@@ -86,14 +86,14 @@ jobs:
           push: false
           load: true
           platforms: linux/amd64
-          tags: ghcr.io/shakes63/palisade:scan
+          tags: ghcr.io/blackpanther989/palisade:scan
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Trivy scan (block on CRITICAL)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/shakes63/palisade:scan
+          image-ref: ghcr.io/blackpanther989/palisade:scan
           format: table
           exit-code: "1"
           severity: CRITICAL

@@ -8,7 +8,7 @@
 # Pinned to the multi-arch index digest so builds are reproducible and the base
 # can't be silently swapped upstream. Bump deliberately: check the current digest
 # with `docker buildx imagetools inspect node:20-bookworm-slim` and update here.
-FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS base
+FROM node:24-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
 # openssl + ca-certificates are required by Prisma's query/schema engines (the
 # slim image omits them, which otherwise breaks `prisma migrate deploy` on boot).

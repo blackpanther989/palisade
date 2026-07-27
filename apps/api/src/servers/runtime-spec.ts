@@ -565,7 +565,7 @@ function buildPalworldSpec(input: RuntimeSpecInput): Docker.ContainerCreateOptio
               [portKey(ports.rcon, "tcp")]: [{ HostPort: String(ports.rcon) }],
             },
           }),
-      CapAdd: ["NET_RAW"],
+      CapAdd: ["NET_ADMIN"],
       RestartPolicy: { Name: "no" }, // manager watchdog owns restarts
       Memory: input.ramLimitMb ? input.ramLimitMb * 1024 * 1024 : undefined,
       NanoCpus: input.cpuLimit ? Math.round(input.cpuLimit * 1e9) : undefined,

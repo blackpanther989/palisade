@@ -20,7 +20,8 @@ RUN apt-get update \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates sqlite3 unzip \
   && rm -rf /var/lib/apt/lists/*
-RUN corepack enable
+RUN npm install -g npm@latest \
+  && corepack enable
 WORKDIR /app
 
 # --- deps: install with the lockfile for reproducibility ---

@@ -134,9 +134,11 @@ export function ich777GameId(appId: number, branch: unknown): string {
  * flag explicitly) — the container dies before printing a line. gosu/su-based
  * images are unaffected (dropping FROM root needs no escalation), so only these
  * two are exempt. Found live: Conan crash-looped with
- * "sudo: The 'no new privileges' flag is set". They still get the PidsLimit.
+ * "sudo: The 'no new privileges' flag is set". Palworld is also exempt to allow
+ * internal tools to perform packet capture (NET_RAW) as a non-root user.
+ * They still get the PidsLimit.
  */
-const NO_NEW_PRIVS_EXEMPT = new Set<Game>([Game.ASA, Game.CONAN]);
+const NO_NEW_PRIVS_EXEMPT = new Set<Game>([Game.ASA, Game.CONAN, Game.PALWORLD, Game.PALWORLD_WINE]);
 
 /**
  * Defense-in-depth applied to every game container: no-new-privileges blocks
@@ -148,6 +150,10 @@ const NO_NEW_PRIVS_EXEMPT = new Set<Game>([Game.ASA, Game.CONAN]);
  */
 function hardenSpec(spec: Docker.ContainerCreateOptions, game: Game): Docker.ContainerCreateOptions {
   const host = (spec.HostConfig ??= {});
+
+  // Add capabilities required for network capture/monitoring and performance.
+  host.CapAdd = [...(host.CapAdd ?? []), "NET_ADMIN", "NET_RAW", "SYS_NICE"];
+
   if (!NO_NEW_PRIVS_EXEMPT.has(game)) {
     host.SecurityOpt = [...(host.SecurityOpt ?? []), "no-new-privileges:true"];
   }
@@ -565,7 +571,6 @@ function buildPalworldSpec(input: RuntimeSpecInput): Docker.ContainerCreateOptio
               [portKey(ports.rcon, "tcp")]: [{ HostPort: String(ports.rcon) }],
             },
           }),
-      Privileged: true,
       RestartPolicy: { Name: "no" }, // manager watchdog owns restarts
       Memory: input.ramLimitMb ? input.ramLimitMb * 1024 * 1024 : undefined,
       NanoCpus: input.cpuLimit ? Math.round(input.cpuLimit * 1e9) : undefined,

@@ -37,6 +37,8 @@ async function bootstrap() {
     credentials: true,
   });
 
+  app.enableShutdownHooks();
+
   await app.listen(env.API_PORT, "0.0.0.0");
   new Logger("Bootstrap").log(
     `Palisade API listening on :${env.API_PORT} (${env.NODE_ENV})`,

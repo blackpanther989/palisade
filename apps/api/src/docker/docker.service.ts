@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { BeforeApplicationShutdown, Injectable, Logger } from "@nestjs/common";
 import Docker from "dockerode";
 import { PassThrough } from "node:stream";
 import { loadEnv } from "../config/env";
@@ -77,7 +77,7 @@ export function computeContainerStats(s: RawStats): ContainerResourceStats | nul
  * (PLANNING.md → Security).
  */
 @Injectable()
-export class DockerService {
+export class DockerService implements BeforeApplicationShutdown {
   private readonly logger = new Logger(DockerService.name);
   private readonly docker: Docker;
 
@@ -218,6 +218,30 @@ export class DockerService {
 
   async inspect(id: string) {
     return this.docker.getContainer(id).inspect();
+  }
+
+  /**
+   * Graceful shutdown: when the manager container is stopped, stop all managed
+   * game server containers so they don't linger. Bounded to a short timeout per
+   * server so the manager can exit within its own Docker grace period.
+   */
+  async beforeApplicationShutdown(): Promise<void> {
+    this.logger.log("Manager shutting down; stopping all managed game servers...");
+    const servers = await this.listManagedServers().catch(() => []);
+    const running = servers.filter((s) => s.running);
+    if (running.length === 0) return;
+
+    this.logger.log(`Stopping ${running.length} running game servers...`);
+    // Parallel stop with a 10s grace period for the game servers (most images
+    // handle SIGTERM to save the world).
+    await Promise.all(
+      running.map((s) =>
+        this.stop(s.id, 10).catch((err) =>
+          this.logger.warn(`stop(${s.serverId}): failed: ${err.message}`),
+        ),
+      ),
+    );
+    this.logger.log("All managed game servers stopped.");
   }
 
   /** Tail logs; calls onLine for each line. Returns a stop() function. */

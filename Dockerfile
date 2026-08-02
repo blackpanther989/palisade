@@ -18,7 +18,7 @@ ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
 # base (Trivy blocks the publish on CRITICAL CVEs, so a stale base fails CI).
 RUN apt-get update \
   && apt-get upgrade -y \
-  && apt-get install -y --no-install-recommends openssl ca-certificates sqlite3 unzip \
+  && apt-get install -y --no-install-recommends openssl ca-certificates sqlite3 unzip tini \
   && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 WORKDIR /app
@@ -75,5 +75,5 @@ EXPOSE 3000 8787
 # Strip any Windows CR from the start script — a CRLF-encoded file makes bash
 # see `pipefail\r` as the option name and fail immediately at startup.
 RUN sed -i 's/\r//' docker/start.sh
-# gosu + tini would be added here for PUID/PGID drop + signal handling.
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["bash", "docker/start.sh"]

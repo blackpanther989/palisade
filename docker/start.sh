@@ -3,18 +3,34 @@
 set -euo pipefail
 
 echo "[ark-manager] applying database migrations..."
-# Fatal on failure: starting the API against an unmigrated DB just crashes later
-# with confusing "no such table" errors. set -e aborts the container so Docker
-# restarts it and the migration error is surfaced in the logs.
 ( cd apps/api && pnpm prisma migrate deploy )
 
 echo "[ark-manager] starting API on :${API_PORT:-8787} and web on :${WEB_PORT:-3000}"
-# tsc emits with the monorepo dir structure preserved under dist/.
-( cd apps/api && node dist/apps/api/src/main.js ) &
+
+# Handle SIGTERM by forwarding it to our background children. Without this,
+# bash (as PID 1) swallows the signal and the processes are SIGKILLed after
+# 10s, skipping their graceful shutdown hooks.
+_term() {
+  echo "[ark-manager] caught SIGTERM; signaling API ($API_PID) and Web ($WEB_PID)..."
+  kill -TERM "$API_PID" 2>/dev/null
+  kill -TERM "$WEB_PID" 2>/dev/null
+}
+trap _term SIGTERM
+
+( cd apps/api && exec node dist/apps/api/src/main.js ) &
 API_PID=$!
-( cd apps/web && pnpm start -p "${WEB_PORT:-3000}" ) &
+( cd apps/web && exec pnpm start -p "${WEB_PORT:-3000}" ) &
 WEB_PID=$!
 
-# If either process dies, take the whole container down so Docker restarts it.
-wait -n "$API_PID" "$WEB_PID"
-exit $?
+# wait -n exits when the first child dies. If bash receives a trapped signal
+# during wait, it executes the trap and wait returns >128. We loop so that
+# we only truly exit if a child died OR we caught TERM.
+while kill -0 "$API_PID" 2>/dev/null && kill -0 "$WEB_PID" 2>/dev/null; do
+  wait -n "$API_PID" "$WEB_PID" || true
+done
+
+# Give children a moment to finish their own shutdown hooks before the script
+# itself exits (which would end the container).
+echo "[ark-manager] waiting for child processes to exit..."
+wait "$API_PID" "$WEB_PID" 2>/dev/null || true
+echo "[ark-manager] shutdown complete."

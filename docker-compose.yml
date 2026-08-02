@@ -53,6 +53,7 @@ services:
       - "8787:8787" # API (optional to expose; web can proxy)
     networks: [ark-net]
     restart: unless-stopped
+    stop_grace_period: 30s
 
   # Least-privilege Docker API gateway (opt in — see header comment).
   # docker-proxy:
